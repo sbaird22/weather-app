@@ -2,10 +2,10 @@
 //import express from 'express';
 class City {
   cityName: string;
-  // temperature: number;
-  constructor(cityName: string) {
+  id: string;
+  constructor(cityName: string,id:string) {
     this.cityName = cityName;
-    // this.temperature = temperature;
+    this.id = id;
   }
 }
 
@@ -14,7 +14,7 @@ import fs from 'fs';
 class HistoryService {
   // TODO: Define a read method that reads from the searchHistory.json file
   ;
-   async read() {
+  private async read() {
     try {
 
       const data = await fs.promises.readFile('searchHistory.json', 'utf-8');
@@ -27,18 +27,17 @@ class HistoryService {
     } 
   }
   
-   async write(cities: City[] = []):Promise<void> {
-   try {
+  private async write(cities: City[]):Promise<void> {
+  try {
   
-     const jsonData = JSON.stringify(cities);
-     console.log(jsonData);
-     fs.writeFile('searchHistory.json', jsonData, function (err) {
-       if (err) {
-         throw err;
-       }}
-   )} catch (err) {
-     console.log('Error writing to searchHistory.json', err);
-   }
+    const jsonData = JSON.stringify(cities,null,2);
+    await fs.writeFile('searchHistory.json', jsonData, function (err) {
+      if (err) {
+        throw err;
+      }}
+  )} catch (err) {
+    console.log('Error writing to searchHistory.json', err);
+  }
   }
 
      
@@ -47,10 +46,8 @@ class HistoryService {
    async getCities() {
   
     try {
-      const data = await this.read();
-    const cities = JSON.parse(data);
-    console.log('cities',cities);
-    return cities;
+      const citiesData = await this.read();
+    return citiesData.map((cityData:{cityName:string; id:string}) => new City(cityData.cityName,cityData.id));
     } catch (err) {
       console.error('Error reading cities:', err);
       return [];
@@ -59,16 +56,11 @@ class HistoryService {
   // TODO Define an addCity method that adds a city to the searchHistory.json file
   async addCity(city: string) {
     try {
-      const cities = await this.read();
-      //const searchHistory = JSON.parse(data);
-      cities.push({ cityName: city });
+      const cities = await this.getCities();
+      const newCity = new City(city, Date.now().toString());
+      cities.push(newCity);
       await this.write(cities);
-      console.log(cities);
-      // Check if the city already exists
-      // if (!searchHistory.includes(city)) {
-      //   const updatedCities = searchHistory.push(city);
-      //   await this.write(updatedCities);
-      //   }
+    
       } catch (err) {
       console.error('Error adding city:', err);
       throw err; 
@@ -80,12 +72,12 @@ class HistoryService {
 
     }
  const histServ =  new HistoryService();
-//  const app = express();
-// app.use(express.json());
-histServ.write();
-  histServ.read();
-  histServ.getCities();
-  histServ.addCity('Denver')
+// //  const app = express();
+// // app.use(express.json());
+// // histServ.write();
+// //   histServ.read();
+ histServ.getCities();
+//   histServ.addCity('Denver')
 
 
 export default new HistoryService();
