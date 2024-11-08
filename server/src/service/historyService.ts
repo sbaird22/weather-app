@@ -1,64 +1,81 @@
+import fs from 'fs';
+import path from 'path';
+
+// City class definition
 class City {
-  cityName: string;
+  city: string;
   id: string;
-  constructor(cityName: string,id:string) {
-    this.cityName = cityName;
+
+  constructor(city: string, id: string) {
+    this.city = city;
     this.id = id;
   }
 }
 
-import fs from 'fs';
 class HistoryService {
-  ;
-  private async read() {
-    try {
+  private filePath: string;
 
-      const data = await fs.promises.readFile('searchHistory.json', 'utf-8');
+  constructor() {
+    // Resolve the file path using path.resolve()
+    this.filePath = path.resolve('searchHistory.json');
+  }
+
+  // Ensure the file exists before reading it
+  private async ensureFileExists() {
+    try {
+      await fs.promises.access(this.filePath);  // Check if file exists
+    } catch {
+      // Create an empty file if not found
+      await fs.promises.writeFile(this.filePath, '[]', 'utf-8');
+    }
+  }
+
+  // Read data from the file
+  private async read(): Promise<City[]> {
+    await this.ensureFileExists();  // Make sure the file exists
+    try {
+      const data = await fs.promises.readFile(this.filePath, 'utf-8');
       const jsonData = JSON.parse(data);
-      console.log('parsed data',jsonData);
-      return jsonData;   
+      return jsonData.map((cityData: { city: string; id: string }) => new City(cityData.city, cityData.id));
     } catch (err) {
       console.error('Error reading search history:', err);
       return [];
-    } 
+    }
   }
-  
-  //write method that writes the updated cities array to the searchHistory.json file
-  private async write(cities: City[]):Promise<void> {
-  try {
-  
-    const jsonData = JSON.stringify(cities,null,2);
-    await fs.writeFile('searchHistory.json', jsonData, function (err) {
-      if (err) {
-        throw err;
-      }}
-  )} catch (err) {
-    console.log('Error writing to searchHistory.json', err);
-  }
-  }
-  async getCities() {
-  
+
+  // Write updated cities array to the file
+  private async write(cities: City[]): Promise<void> {
     try {
-      const citiesData = await this.read();
-    return citiesData.map((cityData:{cityName:string; id:string}) => new City(cityData.cityName,cityData.id));
+      const jsonData = JSON.stringify(cities, null, 2);
+      await fs.promises.writeFile(this.filePath, jsonData);
+      console.log('Successfully written to searchHistory.json');
+    } catch (err) {
+      console.error('Error writing to searchHistory.json:', err);
+    }
+  }
+
+  // Get all cities from the file
+  public async getCities(): Promise<City[]> {
+    try {
+      return await this.read();
     } catch (err) {
       console.error('Error reading cities:', err);
       return [];
     }
   }
-  
-  async addCity(city: string) {
+
+  // Add a new city to the history
+  public async addCity(city: string): Promise<void> {
     try {
       const cities = await this.getCities();
       const newCity = new City(city, Date.now().toString());
       cities.push(newCity);
       await this.write(cities);
-    
-      } catch (err) {
+    } catch (err) {
       console.error('Error adding city:', err);
-      throw err; 
+      throw err;
     }
-  
   }
 }
+
 export default new HistoryService();
