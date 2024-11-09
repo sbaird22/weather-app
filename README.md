@@ -18,8 +18,10 @@ This has a live URL: https://weather-app-4blh.onrender.com
 
 
 ## Contributing
-Authored by @sbaird22
-Not looking at pull requests
+Authored by @sbaird22  
+
+Not looking at pull requests  
+
 Api used: https://openweathermap.org/
 
 ## License
